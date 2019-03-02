@@ -1,0 +1,16 @@
+---
+title: "ESM_22_HW3"
+author: "Camila Bobroff"
+date: "3/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+####Task 1. Open science perspectives
+
+#####600 - 800 word statement
+
+####Task 2. Truckee River flow (2000 - 2016)
