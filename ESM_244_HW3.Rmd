@@ -9,8 +9,72 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, inlcude=FALSE, message=FALSE, warning=FALSE}
+#Part 0. Load packages
+library(tidyverse)
+library(tseries)
+library(forecast)
+```
+
 ####Task 1. Open science perspectives
 
 #####600 - 800 word statement
 
 ####Task 2. Truckee River flow (2000 - 2016)
+
+#####a) Graph with the decomposed time series information
+```{r, message=FALSE, warning=FALSE}
+# Get data
+truckee <- read_csv("clean_truckee_flow.csv")
+
+# Convert to ts data
+truckee_ts <- ts(truckee$mean_va, frequency = 12, start = c(2000,1))
+# plot(truckee_ts)
+
+# Decompose to explore data further
+truckee_dc <- decompose(truckee_ts)
+plot(truckee_dc)
+```
+#####Although there are some high values and low values in the data, there do not seem to be any outliers (which could have a disproportionate effect on the time series model). There seems to be a slight downward trend in the data and it looks non-stationary and additive. We see a seasonal pattern that repeats about every 12 months and a slight cyclical trend about every five years (the seasonal component is on the same scale as the orinigal data).
+
+#####b) Forecast the Truckee River for 5 years after the final observation in the dataset
+```{r, message=FALSE, warning=FALSE}
+# Holt Winters exponential smoothing
+truckee_hw <- HoltWinters(truckee_ts)
+# plot(truckee_hw)
+
+# Forecast Holt Winters
+truckee_forecast <- forecast(truckee_hw, h = 60)
+# plot(truckee_forecast)
+
+# Autoregressive integrated moving average (ARIMA) for comparison
+# estimate pdq
+
+truckee_pdq <- auto.arima(truckee_ts) # [2,1,1,][0,0,2]
+
+# fit the ARIMA model
+truckee_arima <- arima(truckee_ts, order = c(2,1,1), seasonal = list(order = c(0,0,2)))
+
+# evaluate residuals
+# par(mfrow = c(1,2))
+# hist(truckee_arima$residuals)
+# qqnorm(truckee_arima$residuals) # looks normal
+
+# forecast ARIMA
+forecast_truckee <- forecast(truckee_arima, h = 60)
+# plot(forecast_truckee) 
+
+# Graph of Holt Winters 
+plot(truckee_forecast,
+     xlab = "Time",
+     ylab = "Truckee River Flows (cubic feet per second)")
+
+```
+
+#####c) Holt Winters residuals
+```{r, message=FALSE, warning=FALSE}
+par(mfrow = c(1,2))
+hist(truckee_forecast$residuals) 
+qqnorm(truckee_forecast$residuals) # Looks relatively normally distributed.
+```
+
