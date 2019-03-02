@@ -21,6 +21,8 @@ library(ggrepel)
 library(ggspatial)
 library(RColorBrewer)
 library(raster)
+library(naniar)
+library(effsize)
 ```
 
 ####Task 1. Open science perspectives
@@ -102,21 +104,6 @@ ca_counties <- read_sf(dsn = ".", layer = "california_county_shape_file")
 st_crs(ca_counties) = 4326
 
 # Map it!
-nps_ca_map <- ggplot(nps_ca) +
-  geom_sf(aes(fill = Name),
-          color = "NA",
-          show.legend = FALSE,
-          fill = "forestgreen") +
-  geom_sf(data = ca_counties,
-          fill = "NA",
-          color = "black",
-          size = 0.1) +
-  theme_void() +
-  coord_sf(datum = NA) +
-  labs(x = "", y = "", title = "California National Parks")
-
-nps_ca_map
-
 map_nps_ca <- tm_shape(nps_ca) +
   tm_fill("Name", palette = "Dark2", alpha = 0.5) +
   tm_shape(ca_counties) +
@@ -127,6 +114,75 @@ map_nps_ca <- tm_shape(nps_ca) +
 tmap_mode("view")
 
 map_nps_ca
+```
+
+####Task 4. Lizards in the Northern Chihuahuan Desert
+```{r, message=FALSE, warning=FALSE}
+# Read in data and initial wrangling
+lizard <- read_csv("clean_lizard.csv") %>% 
+  filter(site == "CALI") %>% 
+  replace_with_na_all(condition = ~.x == ".") %>% 
+  filter(sex == "F" | sex == "M") %>% 
+  drop_na(weight)
+
+# Coerce weights to be numeric
+lizard$weight <- as.numeric(lizard$weight)
+```
+
+#####a) For all lizards trapped at site ‘CALI’, do weights of male and female adult lizards differ significantly?
+```{r, message=FALSE, warning=FALSE}
+# Visualize data
+# ggplot(lizard, aes(x = weight, fill = sex)) +
+  # geom_histogram(alpha = 0.5, position = "identity")
+
+# Both male and female weights are skewed. However, the central limit theorem applies here - distribution of means will be normally distributed (we have more than 30 observations in each group)
+
+# Vector of adult male lizard weights
+male <- lizard %>% 
+  filter(sex == "M") %>% 
+  pull(weight)
+
+# Vector of adult female lizard weights
+female <- lizard %>% 
+  filter(sex == "F") %>% 
+  pull(weight)
+
+# F test for equal variance
+# H0: Ratio of variances (Variance A/Variance B) = 1
+# HA: Ratio of variances is NOT = 1
+
+lizard_f <- var.test(female, male)
+lizard_f
+# p-value = 0.29, retain the null hypothesis of equal variance
+
+# T sample t-test
+# H0: Mean weights of adult female and male lizards are equal
+# HA: Mean weights of adult female and male lizards are NOT equal
+
+lizard_t <- t.test(female, male, var.equal = TRUE)
+lizard_t
+# p-value = 0.43, retain the null hypothesis. For lizards trapped at the CALI site, mean weights of female and male adult lizards do not differ significantly.
+
+# Mean weights and Cohen's d - effect size
+male_lizard <- lizard %>%
+  dplyr::select(sex, weight) %>% 
+  filter(sex == "M") 
+
+female_lizard <- lizard %>% 
+  dplyr::select(sex, weight) %>% 
+  filter(sex == "F") 
+
+male_mean <- mean(male_lizard$weight) # 4.96
+male_sd <- sd(male_lizard$weight) # 5.68
+female_mean <- mean(female_lizard$weight) # 6.50
+female_sd <- sd(female_lizard$weight) #5.83
+
+# Mean weight difference
+mean_diff <- female_mean - male_mean # 0.86
+
+effect_size <- cohen.d(weight ~ sex, data = lizard) 
+# 0.14 neglibile
 
 ```
+
 
