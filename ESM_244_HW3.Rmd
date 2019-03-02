@@ -14,6 +14,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(tseries)
 library(forecast)
+library(sf)
+library(tmap)
+library(leaflet)
+library(ggrepel)
+library(ggspatial)
+library(RColorBrewer)
+library(raster)
 ```
 
 ####Task 1. Open science perspectives
@@ -76,5 +83,50 @@ plot(truckee_forecast,
 par(mfrow = c(1,2))
 hist(truckee_forecast$residuals) 
 qqnorm(truckee_forecast$residuals) # Looks relatively normally distributed.
+```
+
+####Task 3. Mapping California's National Parks
+```{r, message=FALSE, warning=FALSE}
+# Read in nps data
+nps_ca <- read_sf(dsn = ".", layer = "nps_boundary") %>%
+  filter(STATE == "CA",
+         UNIT_TYPE == "National Park") %>% 
+  dplyr::select(UNIT_NAME) %>% 
+  rename(Name = UNIT_NAME)
+
+st_crs(nps_ca) = 4326
+
+# Read in CA county data
+ca_counties <- read_sf(dsn = ".", layer = "california_county_shape_file")
+
+st_crs(ca_counties) = 4326
+
+# Map it!
+nps_ca_map <- ggplot(nps_ca) +
+  geom_sf(aes(fill = Name),
+          color = "NA",
+          show.legend = FALSE,
+          fill = "forestgreen") +
+  geom_sf(data = ca_counties,
+          fill = "NA",
+          color = "black",
+          size = 0.1) +
+  theme_void() +
+  coord_sf(datum = NA) +
+  labs(x = "", y = "", title = "California National Parks")
+
+nps_ca_map
+
+map_nps_ca <- tm_shape(nps_ca) +
+  tm_fill("Name", palette = "Dark2", alpha = 0.5) +
+  tm_shape(ca_counties) +
+  tm_basemap("Esri.WorldPhysical") +
+  tm_legend(show = FALSE) +
+  tm_borders()
+
+tmap_mode("view")
+
+map_nps_ca
+
 ```
 
