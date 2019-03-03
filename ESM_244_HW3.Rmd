@@ -55,7 +55,7 @@ truckee_dc <- decompose(truckee_ts)
 plot(truckee_dc)
 ```
 
-Although there are some high values and low values in the data, there do not seem to be any outliers (which could have a disproportionate effect on the time series model). There seems to be a slight downward trend in the data and it looks non-stationary and additive. We see a seasonal pattern that repeats about every 12 months and a slight cyclical trend about every five years (the seasonal component is on the same scale as the orinigal data).
+Although there are some high values and low values in the data, there do not seem to be any outliers (which could have a disproportionate effect on the time series model). There seems to be a slight downward trend in the data and it looks non-stationary and additive. We see a seasonal pattern that repeats about every 12 months and a slight cyclical trend about every five years (the seasonal component is on the same scale as the original data).
 
 #####b) Forecast the Truckee River for 5 years after the final observation in the dataset
 ```{r, message=FALSE, warning=FALSE}
