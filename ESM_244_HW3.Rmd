@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, inlcude=FALSE, message=FALSE, warning=FALSE}
+```{r, inlcude=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
 #Part 0. Load packages
 library(tidyverse)
 library(tseries)
@@ -44,7 +44,8 @@ truckee_ts <- ts(truckee$mean_va, frequency = 12, start = c(2000,1))
 truckee_dc <- decompose(truckee_ts)
 plot(truckee_dc)
 ```
-#####Although there are some high values and low values in the data, there do not seem to be any outliers (which could have a disproportionate effect on the time series model). There seems to be a slight downward trend in the data and it looks non-stationary and additive. We see a seasonal pattern that repeats about every 12 months and a slight cyclical trend about every five years (the seasonal component is on the same scale as the orinigal data).
+
+Although there are some high values and low values in the data, there do not seem to be any outliers (which could have a disproportionate effect on the time series model). There seems to be a slight downward trend in the data and it looks non-stationary and additive. We see a seasonal pattern that repeats about every 12 months and a slight cyclical trend about every five years (the seasonal component is on the same scale as the orinigal data).
 
 #####b) Forecast the Truckee River for 5 years after the final observation in the dataset
 ```{r, message=FALSE, warning=FALSE}
@@ -152,7 +153,6 @@ female <- lizard %>%
 # HA: Ratio of variances is NOT = 1
 
 lizard_f <- var.test(female, male)
-lizard_f
 # p-value = 0.29, retain the null hypothesis of equal variance
 
 # T sample t-test
@@ -160,7 +160,6 @@ lizard_f
 # HA: Mean weights of adult female and male lizards are NOT equal
 
 lizard_t <- t.test(female, male, var.equal = TRUE)
-lizard_t
 # p-value = 0.43, retain the null hypothesis. For lizards trapped at the CALI site, mean weights of female and male adult lizards do not differ significantly.
 
 # Mean weights and Cohen's d - effect size
@@ -182,7 +181,31 @@ mean_diff <- female_mean - male_mean # 0.86
 
 effect_size <- cohen.d(weight ~ sex, data = lizard) 
 # 0.14 neglibile
+```
+Mean adult female lizard weights (6.50 g ± 5.83 g, n = 75) and adult male lizard weights (4.96 g ± 5.68 g, n = 57) for lizards trapped at the Caliche creosotebush site did not differ significantly [t(`r lizard_t$parameter`) = `r round(lizard_t$statistic,2)`, *p* = `r round(lizard_t$p.value,3)`, $\alpha$ = 0.05]. The effect size is negligible (Cohen's d = 0.14) and the difference in mean weight between female and male lizards is 0.86 grams.
+
+#####b) For lizards trapped at the ‘CALI’ site, is there a significant difference in the proportion of adult male and female lizards with broken tails?
+```{r, message=FALSE, warning=FALSE}
+lizard_tails <- lizard %>% 
+  dplyr::select(sex, tail) %>% 
+  drop_na(tail)
+
+# Chi-square
+# H0: There is no significant difference between proportion of females and males with broken tails
+# HA: There is a significant difference between proportion of females and males with broken tails
+
+chi_tail <- lizard_tails %>%
+  count(sex, tail) %>% 
+  spread(tail, n) %>% 
+  dplyr::select(-sex)
+
+rownames(chi_tail) <- c("F","M")
+
+#Actual proportions:
+tail_prop <- prop.table(as.matrix(chi_tail), 1)
+
+tail_x2 <- chisq.test(chi_tail) # Retain the null, there is no significant difference in proportions of females and males with broken tails at the CALI site x2 = 0.163, df = 1, p-value = 0.69
 
 ```
 
-
+There is no significant difference in the proportion of observed adult female (0.23) and male lizards (0.18) with broken tails at the Caliche creosotebush site ($\chi^2${`r tail_x2$parameter`} = `r round(tail_x2$statistic, 2)`, *p* = `r round(tail_x2$p.value, 2)`). 
